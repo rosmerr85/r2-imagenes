@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raven's 2 — Evaluación Digital</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --border: #d1d5db;
+      --success: #065f46;
+      --error: #991b1b;
+      --warn-bg: #fffbeb;
+      --warn-border: #fcd34d;
+      --warn-text: #92400e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1020px;
+      margin: 28px auto;
+      padding: 0 16px 56px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    h1 { margin: 0 0 8px; font-size: 1.6rem; }
+    h2 { margin: 0 0 14px; font-size: 1.25rem; }
+    .subtitle { color: var(--muted); margin: 0; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    label { font-weight: 600; font-size: 0.92rem; }
+
+    input, select, textarea {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #fff;
+    }
+
+    input[readonly], select:disabled {
+      background: #eef2f7;
+      color: #374151;
+      cursor: not-allowed;
+    }
+
+    .age-warning {
+      margin-top: 4px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      color: var(--warn-text);
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: none;
+    }
+
+    .age-warning.visible {
+      display: block;
+    }
+
+    .topbar-sticky {
+      position: sticky;
+      top: 10px;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .timer-badge {
+      background: #eff6ff;
+      color: var(--primary);
+      border: 1px solid #bfdbfe;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-badge.warning {
+      background: #fef2f2;
+      color: var(--error);
+      border-color: #fecaca;
+    }
+
+    .item-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 18px;
+      background: #fafafa;
+    }
+
+    .item-header {
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--primary);
+    }
+
+    .matriz-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 18px;
+      width: 100%;
+      min-height: 120px;
+    }
+
+    .matriz-wrap img {
+      width: 100%;
+      max-width: 540px;
+      max-height: 320px;
+      object-fit: contain;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px;
+    }
+
+    .opciones-fila {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .opcion-card {
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      overflow: hidden;
+    }
+
+    .opcion-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .opcion-card.selected {
+      border-color: var(--primary);
+      background: #eff6ff;
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.18);
+    }
+
+    .opcion-img-area {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+    }
+
+    .opcion-card img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .opcion-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding-top: 4px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .ejemplo-box {
+      border: 1px solid #bfdbfe;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .ejemplo-estado {
+      margin-top: 10px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      min-height: 20px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 11px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+    }
+
+    button:hover:not(:disabled) { background: var(--primary-hover); }
+    button.secondary { background: #4b5563; }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .status {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      display: none;
+      font-size: 0.92rem;
+      word-break: break-word;
+    }
+    .status.ok { display: block; background: #ecfdf5; color: var(--success); border: 1px solid #a7f3d0; }
+    .status.err { display: block; background: #fef2f2; color: var(--error); border: 1px solid #fecaca; }
+
+    .hidden { display: none; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.58);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #fff;
+      border-radius: 12px;
+      max-width: 480px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
+    }
+
+    .modal-card h3 {
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+    }
+
+    .modal-card p {
+      margin: 0 0 18px;
+      color: #374151;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    @media (max-width: 640px) {
+      .card { padding: 16px; }
+      .item-box { padding: 12px; }
+      .opciones-fila { gap: 4px; }
+      .opcion-card { padding: 4px; border-radius: 7px; border-width: 1.5px; }
+      .opcion-label-row { font-size: 0.78rem; gap: 3px; }
+      .opcion-label-row input[type="radio"] { width: 12px; height: 12px; margin: 0; }
+      .matriz-wrap img { max-height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Raven's 2 — Aplicación Digital</h1>
+      <p class="subtitle">Completa los datos iniciales para calcular la edad, definir el tramo y cargar los estímulos.</p>
+    </div>
+
+    <div id="seccion-datos" class="card">
+      <h2>Datos del Evaluado y Configuración</h2>
+      <div class="grid-2">
+        <div class="field">
+          <label for="nombre">Nombre o código del evaluado *</label>
+          <input id="nombre" type="text" required placeholder="Ej. EVAL-001" />
+        </div>
+        <div class="field">
+          <label for="sexo">Sexo *</label>
+          <select id="sexo" required>
+            <option value="">Selecciona...</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Otro / Prefiere no indicar">Otro / Prefiere no indicar</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fechaNacimiento">Fecha de nacimiento *</label>
+          <input id="fechaNacimiento" type="date" required onchange="actualizarEdadYTramo()" />
+        </div>
+        <div class="field">
+          <label for="fechaAplicacion">Fecha de aplicación *</label>
+          <input id="fechaAplicacion" type="date" required onchange="actualizarEdadYTramo()" />
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="field">
+          <label for="edadCalculada">Edad calculada (años)</label>
+          <input id="edadCalculada" type="text" readonly placeholder="Se calcula automáticamente" />
+          <div id="advertencia-edad" class="age-warning" role="status"></div>
+        </div>
+        <div class="field">
+          <label for="tramoEdad">Tramo de edad asignado</label>
+          <select id="tramoEdad" disabled>
+            <option value="">Calculado automáticamente...</option>
+            <option value="4:0 a 8:11 años (Grupos A, B y C)">4:0 a 8:11 años (Grupos A, B y C)</option>
+            <option value="9:0 a 69:11 años (Grupos B, C, D y E)">9:0 a 69:11 años (Grupos B, C, D y E)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="timerMinutos">Temporizador (minutos, 0 = sin límite)</label>
+          <input id="timerMinutos" type="number" min="0" max="180" step="1" value="0" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="examinador">Examinador / Observaciones</label>
+        <input id="examinador" type="text" placeholder="Opcional" />
+      </div>
+
+      <div class="actions">
+        <span></span>
+        <button id="btnIniciar" type="button" onclick="iniciarEvaluacion()">Ir a ejemplos y comenzar</button>
+      </div>
+      <div id="status-inicio" class="status"></div>
+    </div>
+
+    <div id="seccion-ejemplos" class="card hidden">
+      <h2>Ejemplos de Práctica</h2>
+      <p class="subtitle" style="margin-bottom: 18px;">
+        Practica seleccionando la opción que completa cada matriz y aclara tus dudas antes de iniciar la evaluación oficial.
+      </p>
+
+      <div id="contenedor-ejemplos"></div>
+
+      <div class="actions">
+        <button type="button" class="secondary" onclick="volverADatos()">Volver a datos</button>
+        <button type="button" onclick="comenzarEstudioReal()">Comenzar evaluación</button>
+      </div>
+    </div>
+
+    <div id="seccion-grupos" class="card hidden">
+      <div class="topbar-sticky">
+        <div>
+          <h2 id="titulo-grupo" style="margin:0;">Grupo</h2>
+          <span id="progreso-grupo" style="color:var(--muted); font-weight:600; font-size:0.9rem;"></span>
+        </div>
+        <div id="timer-display" class="timer-badge hidden">Tiempo restante: --:--</div>
+      </div>
+
+      <p class="subtitle" style="margin-bottom:18px;">
+        Selecciona la opción (1 a 5) que completa correctamente cada matriz.
+      </p>
+
+      <div id="contenedor-items"></div>
+
+      <div class="actions">
+        <button id="btnAnterior" type="button" class="secondary" onclick="grupoAnterior()">Anterior</button>
+        <button id="btnSiguiente" type="button" onclick="siguienteOEnviar()">Siguiente</button>
+      </div>
+      <div id="status-envio" class="status"></div>
+    </div>
+  </div>
+
+  <div id="modal-advertencia" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="titulo-adv">
+    <div class="modal-card">
+      <h3 id="titulo-adv">Advertencia antes de enviar</h3>
+      <p>
+        Al enviar la evaluación, tus respuestas se registrarán de forma definitiva y
+        <strong>la ventana del test se cerrará automáticamente</strong>. ¿Deseas continuar?
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="secondary" onclick="cerrarModalAdvertencia()">Cancelar</button>
+        <button type="button" onclick="confirmarYEnviarEvaluacion()">Aceptar y enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-exito" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="titulo-exito">
+    <div class="modal-card">
+      <h3 id="titulo-exito">¡Evaluación enviada con éxito!</h3>
+      <p id="mensaje-exito">
+        Las respuestas quedaron registradas correctamente. Presiona <strong>Cerrar</strong> para cerrar esta ventana.
+      </p>
+      <div id="nota-cierre-manual" class="status err" style="margin-bottom:14px;"></div>
+      <div class="modal-actions">
+        <button type="button" onclick="cerrarTodo()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwj4Zy1TPm8WxilZlLh72_kxWOSau9X6zlmgKyFrY3KjUs1U3LcynE36kkU-Tz6jVw1bA/exec";
+    const GITHUB_PAGES_BASE_URL = "https://rosmerr85.github.io/r2-imagenes";
+    const EXTENSION_IMAGEN = "png";
+    const SUFIJO_MATRIZ = "matriz";
+    const CACHE_NAME = "ravens2-imagenes-cache-v1";
+
+    const EJEMPLOS_PRACTICA = [
+      { codigo: "Ejemplo_A", titulo: "Ejemplo A" },
+      { codigo: "Ejemplo_B", titulo: "Ejemplo B" },
+      { codigo: "Ejemplo_C", titulo: "Ejemplo C" }
+    ];
+
+    const estado = {
+      edadAnios: null,
+      constanciaFueraRangoEdad: "",
+      tramoEdad: "",
+      grupos: [],
+      indiceGrupoActual: 0,
+      catalogoUrls: {},
+      respuestas: {},
+      respuestasEjemplo: {},
+      timerInterval: null,
+      segundosRestantes: 0,
+      envioEnCurso: false
+    };
+
+    document.getElementById("fechaAplicacion").valueAsDate = new Date();
+
+    function esPantallaMovil() {
+      return window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
+    }
+
+    function textoOpcion(opt) {
+      return esPantallaMovil() ? String(opt) : `Opción ${opt}`;
+    }
+
+    function construirUrlsItem(carpeta, codigo) {
+      const base = GITHUB_PAGES_BASE_URL.replace(/\/+$/, "");
+      const ext = EXTENSION_IMAGEN.replace(/^\.+/, "");
+      return {
+        codigo,
+        grupo: carpeta,
+        matriz: `${base}/${carpeta}/${codigo}_${SUFIJO_MATRIZ}.${ext}`,
+        opciones: [1, 2, 3, 4, 5].map(
+          (opt) => `${base}/${carpeta}/${codigo}_${opt}.${ext}`
+        )
+      };
+    }
+
+    function construirCatalogoBloqueEdad(gruposBloque) {
+      const catalogo = {};
+
+      EJEMPLOS_PRACTICA.forEach((ej) => {
+        catalogo[ej.codigo] = construirUrlsItem("Ejemplos", ej.codigo);
+      });
+
+      gruposBloque.forEach((grupo) => {
+        for (let i = 1; i <= 12; i++) {
+          const codigo = `${grupo}${i}`;
+          catalogo[codigo] = construirUrlsItem(grupo, codigo);
+        }
+      });
+
+      return catalogo;
+    }
+
+    function cargarImagenConReintento(url, intentosRestantes = 2) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.decoding = "async";
+        img.referrerPolicy = "no-referrer";
+
+        img.onload = async () => {
+          if (typeof img.decode === "function") {
+            try { await img.decode(); } catch (_) {}
+          }
+          resolve(true);
+        };
+
+        img.onerror = () => {
+          if (intentosRestantes > 0) {
+            setTimeout(() => {
+              cargarImagenConReintento(url, intentosRestantes - 1).then(resolve);
+            }, 250);
+          } else {
+            resolve(false);
+          }
+        };
+
+        img.src = url;
+      });
+    }
+
+    async function precargarBloqueCompleto(catalogo, onProgreso) {
+      const urls = [];
+      Object.values(catalogo).forEach((item) => {
+        if (item.matriz) urls.push(item.matriz);
+        if (Array.isArray(item.opciones)) {
+          item.opciones.forEach((u) => {
+            if (u) urls.push(u);
+          });
+        }
+      });
+
+      let cacheObj = null;
+      const esHttp = window.location.protocol === "https:" || window.location.protocol === "http:";
+      if (esHttp && "caches" in window) {
+        try {
+          cacheObj = await caches.open(CACHE_NAME);
+        } catch (_) {
+          cacheObj = null;
+        }
+      }
+
+      let completadas = 0;
+      const total = urls.length;
+      const concurrencia = 6;
+
+      async function cargarUna(url) {
+        try {
+          if (cacheObj) {
+            try {
+              const match = await cacheObj.match(url, { ignoreSearch: false });
+              if (!match) {
+                const resp = await fetch(url, { cache: "force-cache", mode: "cors" });
+                if (resp && resp.ok) {
+                  await cacheObj.put(url, resp.clone());
+                }
+              }
+            } catch (_) {}
+          }
+          await cargarImagenConReintento(url, 2);
+        } finally {
+          completadas++;
+          if (typeof onProgreso === "function") {
+            onProgreso(completadas, total);
+          }
+        }
+      }
+
+      let idx = 0;
+      async function worker() {
+        while (idx < urls.length) {
+          const actual = urls[idx++];
+          await cargarUna(actual);
+        }
+      }
+
+      const workers = Array.from({ length: Math.min(concurrencia, urls.length) }, worker);
+      await Promise.all(workers);
+    }
+
+    function adjuntarFallbackImagen(imgEl, urlOriginal) {
+      let reintentado = false;
+      imgEl.referrerPolicy = "no-referrer";
+      imgEl.onerror = () => {
+        if (!reintentado) {
+          reintentado = true;
+          const sep = urlOriginal.includes("?") ? "&" : "?";
+          imgEl.src = `${urlOriginal}${sep}v=${Date.now()}`;
+        }
+      };
+    }
+
+    function calcularEdadEnAnios(fechaNacStr, fechaApStr) {
+      if (!fechaNacStr || !fechaApStr) return null;
+      const nac = new Date(fechaNacStr + "T00:00:00");
+      const ap = new Date(fechaApStr + "T00:00:00");
+      if (isNaN(nac.getTime()) || isNaN(ap.getTime()) || ap < nac) return null;
+
+      let edad = ap.getFullYear() - nac.getFullYear();
+      const mesDiff = ap.getMonth() - nac.getMonth();
+      if (mesDiff < 0 || (mesDiff === 0 && ap.getDate() < nac.getDate())) {
+        edad--;
+      }
+      return edad;
+    }
+
+    function obtenerConstanciaEdad(edad) {
+      if (edad === null || edad === undefined) return "";
+      if (edad < 4) {
+        return "Constancia: el test está diseñado para personas con edad mayor o igual a 4 años.";
+      }
+      if (edad >= 70) {
+        return "Constancia: el test está diseñado para personas con edad menor a 70 años.";
+      }
+      return "";
+    }
+
+    function actualizarEdadYTramo() {
+      const nacStr = document.getElementById("fechaNacimiento").value;
+      const apStr = document.getElementById("fechaAplicacion").value;
+      const inputEdad = document.getElementById("edadCalculada");
+      const divAdvertenciaEdad = document.getElementById("advertencia-edad");
+      const selectTramo = document.getElementById("tramoEdad");
+
+      const edad = calcularEdadEnAnios(nacStr, apStr);
+      if (edad === null) {
+        estado.edadAnios = null;
+        estado.constanciaFueraRangoEdad = "";
+        estado.tramoEdad = "";
+        inputEdad.value = "";
+        selectTramo.value = "";
+        divAdvertenciaEdad.textContent = "";
+        divAdvertenciaEdad.classList.remove("visible");
+        return;
+      }
+
+      estado.edadAnios = edad;
+      inputEdad.value = `${edad} ${edad === 1 ? "año" : "años"}`;
+
+      const constancia = obtenerConstanciaEdad(edad);
+      estado.constanciaFueraRangoEdad = constancia;
+      if (constancia) {
+        divAdvertenciaEdad.textContent = constancia;
+        divAdvertenciaEdad.classList.add("visible");
+      } else {
+        divAdvertenciaEdad.textContent = "";
+        divAdvertenciaEdad.classList.remove("visible");
+      }
+
+      if (edad < 9) {
+        selectTramo.value = "4:0 a 8:11 años (Grupos A, B y C)";
+      } else {
+        selectTramo.value = "9:0 a 69:11 años (Grupos B, C, D y E)";
+      }
+      estado.tramoEdad = selectTramo.value;
+    }
+
+    function mostrarEstado(elId, tipo, mensaje) {
+      const el = document.getElementById(elId);
+      el.className = `status ${tipo}`;
+      el.textContent = mensaje;
+    }
+
+    function limpiarEstado(elId) {
+      const el = document.getElementById(elId);
+      el.className = "status";
+      el.textContent = "";
+    }
+
+    async function iniciarEvaluacion() {
+      actualizarEdadYTramo();
+
+      const nombre = document.getElementById("nombre").value.trim();
+      const sexo = document.getElementById("sexo").value;
+      const fechaNacimiento = document.getElementById("fechaNacimiento").value;
+      const fechaAplicacion = document.getElementById("fechaAplicacion").value;
+      const tramoEdad = estado.tramoEdad;
+
+      if (!nombre || !sexo || !fechaNacimiento || !fechaAplicacion) {
+        mostrarEstado("status-inicio", "err", "Por favor completa todos los campos obligatorios (*).");
+        return;
+      }
+
+      if (estado.edadAnios === null || !tramoEdad) {
+        mostrarEstado("status-inicio", "err", "Verifica que la fecha de aplicación sea igual o posterior a la de nacimiento.");
+        return;
+      }
+
+      const btn = document.getElementById("btnIniciar");
+      btn.disabled = true;
+
+      const esMenor = tramoEdad.startsWith("4:0 a 8:11");
+      estado.tramoEdad = tramoEdad;
+      estado.grupos = esMenor ? ["A", "B", "C"] : ["B", "C", "D", "E"];
+      estado.indiceGrupoActual = 0;
+      estado.respuestas = {};
+      estado.catalogoUrls = construirCatalogoBloqueEdad(estado.grupos);
+
+      mostrarEstado(
+        "status-inicio",
+        "ok",
+        `Cargando bloque completo (${estado.grupos.join(", ")}) y ejemplos desde GitHub Pages...`
+      );
+
+      await precargarBloqueCompleto(estado.catalogoUrls, (done, total) => {
+        mostrarEstado(
+          "status-inicio",
+          "ok",
+          `Cargando estímulos del bloque de edad: ${done} / ${total} imágenes...`
+        );
+      });
+
+      limpiarEstado("status-inicio");
+      document.getElementById("seccion-datos").classList.add("hidden");
+      renderizarEjemplos();
+      document.getElementById("seccion-ejemplos").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function volverADatos() {
+      document.getElementById("seccion-ejemplos").classList.add("hidden");
+      document.getElementById("seccion-datos").classList.remove("hidden");
+      document.getElementById("btnIniciar").disabled = false;
+    }
+
+    function renderizarEjemplos() {
+      const cont = document.getElementById("contenedor-ejemplos");
+      cont.innerHTML = "";
+
+      EJEMPLOS_PRACTICA.forEach((ej) => {
+        const itemData = estado.catalogoUrls[ej.codigo] || { matriz: null, opciones: [] };
+        const box = document.createElement("div");
+        box.className = "ejemplo-box";
+
+        const header = document.createElement("div");
+        header.className = "item-header";
+        header.textContent = ej.titulo;
+        box.appendChild(header);
+
+        if (itemData.matriz) {
+          const matrizWrap = document.createElement("div");
+          matrizWrap.className = "matriz-wrap";
+          const imgM = document.createElement("img");
+          imgM.src = itemData.matriz;
+          imgM.alt = `Matriz ${ej.codigo}`;
+          imgM.decoding = "async";
+          adjuntarFallbackImagen(imgM, itemData.matriz);
+          matrizWrap.appendChild(imgM);
+          box.appendChild(matrizWrap);
+        }
+
+        const fila = document.createElement("div");
+        fila.className = "opciones-fila";
+
+        const estadoTexto = document.createElement("div");
+        estadoTexto.className = "ejemplo-estado";
+        const previa = estado.respuestasEjemplo[ej.codigo];
+        estadoTexto.textContent = previa ? `Opción marcada: ${previa}` : "";
+
+        for (let opt = 1; opt <= 5; opt++) {
+          const valStr = String(opt);
+          const seleccionada = previa === valStr;
+
+          const card = document.createElement("div");
+          card.className = "opcion-card" + (seleccionada ? " selected" : "");
+          card.onclick = () => {
+            estado.respuestasEjemplo[ej.codigo] = valStr;
+            fila.querySelectorAll(".opcion-card").forEach((c, idx) => {
+              const active = String(idx + 1) === valStr;
+              c.classList.toggle("selected", active);
+              const r = c.querySelector("input[type='radio']");
+              if (r) r.checked = active;
+            });
+            estadoTexto.textContent = `Opción marcada: ${valStr}`;
+          };
+
+          const imgArea = document.createElement("div");
+          imgArea.className = "opcion-img-area";
+          const urlOpt = (itemData.opciones && itemData.opciones[opt - 1]) || "";
+          const imgO = document.createElement("img");
+          imgO.src = urlOpt;
+          imgO.alt = `${ej.codigo} Opción ${opt}`;
+          imgO.decoding = "async";
+          if (urlOpt) adjuntarFallbackImagen(imgO, urlOpt);
+          imgArea.appendChild(imgO);
+          card.appendChild(imgArea);
+
+          const row = document.createElement("div");
+          row.className = "opcion-label-row";
+          const radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = `ej_${ej.codigo}`;
+          radio.value = valStr;
+          radio.checked = seleccionada;
+
+          const span = document.createElement("span");
+          span.textContent = textoOpcion(opt);
+
+          row.appendChild(radio);
+          row.appendChild(span);
+          card.appendChild(row);
+          fila.appendChild(card);
+        }
+
+        box.appendChild(fila);
+        box.appendChild(estadoTexto);
+        cont.appendChild(box);
+      });
+    }
+
+    function iniciarTemporizadorSiCorresponde() {
+      if (estado.timerInterval) {
+        clearInterval(estado.timerInterval);
+        estado.timerInterval = null;
+      }
+
+      const minutos = Number(document.getElementById("timerMinutos").value || 0);
+      const badge = document.getElementById("timer-display");
+
+      if (!minutos || minutos <= 0) {
+        badge.classList.add("hidden");
+        return;
+      }
+
+      estado.segundosRestantes = Math.round(minutos * 60);
+      badge.classList.remove("hidden", "warning");
+      actualizarTextoTimer();
+
+      estado.timerInterval = setInterval(() => {
+        estado.segundosRestantes--;
+        actualizarTextoTimer();
+
+        if (estado.segundosRestantes <= 60) {
+          badge.classList.add("warning");
+        }
+
+        if (estado.segundosRestantes <= 0) {
+          clearInterval(estado.timerInterval);
+          estado.timerInterval = null;
+          confirmarYEnviarEvaluacion();
+        }
+      }, 1000);
+    }
+
+    function actualizarTextoTimer() {
+      const total = Math.max(0, estado.segundosRestantes);
+      const mins = String(Math.floor(total / 60)).padStart(2, "0");
+      const segs = String(total % 60).padStart(2, "0");
+      document.getElementById("timer-display").textContent = `Tiempo restante: ${mins}:${segs}`;
+    }
+
+    function comenzarEstudioReal() {
+      document.getElementById("seccion-ejemplos").classList.add("hidden");
+      document.getElementById("seccion-grupos").classList.remove("hidden");
+      iniciarTemporizadorSiCorresponde();
+      renderizarGrupoActual();
+    }
+
+    function renderizarGrupoActual() {
+      const grupo = estado.grupos[estado.indiceGrupoActual];
+      const totalGrupos = estado.grupos.length;
+
+      document.getElementById("titulo-grupo").textContent = `Grupo ${grupo} (${estado.tramoEdad})`;
+      document.getElementById("progreso-grupo").textContent =
+        `Sección ${estado.indiceGrupoActual + 1} de ${totalGrupos}`;
+
+      const contenedor = document.getElementById("contenedor-items");
+      contenedor.innerHTML = "";
+
+      for (let i = 1; i <= 12; i++) {
+        const codigo = `${grupo}${i}`;
+        const itemData = estado.catalogoUrls[codigo] || { matriz: null, opciones: [] };
+
+        const box = document.createElement("div");
+        box.className = "item-box";
+
+        const header = document.createElement("div");
+        header.className = "item-header";
+        header.textContent = `Ítem ${codigo}`;
+        box.appendChild(header);
+
+        if (itemData.matriz) {
+          const matrizWrap = document.createElement("div");
+          matrizWrap.className = "matriz-wrap";
+          const imgM = document.createElement("img");
+          imgM.src = itemData.matriz;
+          imgM.alt = `Matriz ${codigo}`;
+          imgM.decoding = "async";
+          adjuntarFallbackImagen(imgM, itemData.matriz);
+          matrizWrap.appendChild(imgM);
+          box.appendChild(matrizWrap);
+        }
+
+        const fila = document.createElement("div");
+        fila.className = "opciones-fila";
+
+        for (let opt = 1; opt <= 5; opt++) {
+          const valorStr = String(opt);
+          const seleccionada = estado.respuestas[codigo] === valorStr;
+
+          const card = document.createElement("div");
+          card.className = "opcion-card" + (seleccionada ? " selected" : "");
+          card.onclick = () => seleccionarOpcion(codigo, valorStr, fila);
+
+          const imgArea = document.createElement("div");
+          imgArea.className = "opcion-img-area";
+          const urlOpt = (itemData.opciones && itemData.opciones[opt - 1]) || "";
+          const imgO = document.createElement("img");
+          imgO.src = urlOpt;
+          imgO.alt = `${codigo} Opción ${opt}`;
+          imgO.decoding = "async";
+          if (urlOpt) adjuntarFallbackImagen(imgO, urlOpt);
+          imgArea.appendChild(imgO);
+          card.appendChild(imgArea);
+
+          const row = document.createElement("div");
+          row.className = "opcion-label-row";
+
+          const radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = `item_${codigo}`;
+          radio.value = valorStr;
+          radio.checked = seleccionada;
+
+          const span = document.createElement("span");
+          span.textContent = textoOpcion(opt);
+
+          row.appendChild(radio);
+          row.appendChild(span);
+          card.appendChild(row);
+          fila.appendChild(card);
+        }
+
+        box.appendChild(fila);
+        contenedor.appendChild(box);
+      }
+
+      document.getElementById("btnAnterior").disabled = estado.indiceGrupoActual === 0;
+      document.getElementById("btnSiguiente").disabled = false;
+      document.getElementById("btnSiguiente").textContent =
+        estado.indiceGrupoActual === totalGrupos - 1 ? "Enviar evaluación" : "Siguiente";
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function seleccionarOpcion(codigo, valorStr, filaEl) {
+      estado.respuestas[codigo] = valorStr;
+      const cards = filaEl.querySelectorAll(".opcion-card");
+      cards.forEach((c, idx) => {
+        const esEste = String(idx + 1) === valorStr;
+        c.classList.toggle("selected", esEste);
+        const radio = c.querySelector("input[type='radio']");
+        if (radio) radio.checked = esEste;
+      });
+    }
+
+    function validarGrupoActual() {
+      const grupo = estado.grupos[estado.indiceGrupoActual];
+      for (let i = 1; i <= 12; i++) {
+        const codigo = `${grupo}${i}`;
+        if (!estado.respuestas[codigo]) {
+          return codigo;
+        }
+      }
+      return null;
+    }
+
+    function grupoAnterior() {
+      if (estado.indiceGrupoActual > 0) {
+        estado.indiceGrupoActual--;
+        limpiarEstado("status-envio");
+        renderizarGrupoActual();
+      }
+    }
+
+    function siguienteOEnviar() {
+      const faltante = validarGrupoActual();
+      if (faltante) {
+        mostrarEstado("status-envio", "err", `Falta responder el ítem ${faltante} antes de continuar.`);
+        return;
+      }
+      limpiarEstado("status-envio");
+
+      if (estado.indiceGrupoActual < estado.grupos.length - 1) {
+        estado.indiceGrupoActual++;
+        renderizarGrupoActual();
+        return;
+      }
+
+      abrirModalAdvertencia();
+    }
+
+    function abrirModalAdvertencia() {
+      document.getElementById("modal-advertencia").classList.add("active");
+    }
+
+    function cerrarModalAdvertencia() {
+      document.getElementById("modal-advertencia").classList.remove("active");
+    }
+
+    function enviarViaIframeForm(jsonString) {
+      return new Promise((resolve) => {
+        const iframeName = "ravens2_submit_iframe_" + Date.now();
+        const iframe = document.createElement("iframe");
+        iframe.name = iframeName;
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = WEB_APP_URL;
+        form.target = iframeName;
+        form.style.display = "none";
+
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "payload";
+        input.value = jsonString;
+        form.appendChild(input);
+
+        document.body.appendChild(form);
+
+        let terminado = false;
+        const finalizar = () => {
+          if (terminado) return;
+          terminado = true;
+          setTimeout(() => {
+            form.remove();
+            iframe.remove();
+          }, 1500);
+          resolve();
+        };
+
+        iframe.onload = finalizar;
+        iframe.onerror = finalizar;
+        form.submit();
+        setTimeout(finalizar, 2500);
+      });
+    }
+
+    async function confirmarYEnviarEvaluacion() {
+      if (estado.envioEnCurso) return;
+      estado.envioEnCurso = true;
+      cerrarModalAdvertencia();
+
+      if (estado.timerInterval) {
+        clearInterval(estado.timerInterval);
+        estado.timerInterval = null;
+      }
+
+      const btnSig = document.getElementById("btnSiguiente");
+      const btnAnt = document.getElementById("btnAnterior");
+      btnSig.disabled = true;
+      btnAnt.disabled = true;
+      mostrarEstado("status-envio", "ok", "Enviando evaluación y guardando respuestas...");
+
+      const payload = {
+        nombre: document.getElementById("nombre").value.trim(),
+        sexo: document.getElementById("sexo").value,
+        fechaNacimiento: document.getElementById("fechaNacimiento").value,
+        fechaAplicacion: document.getElementById("fechaAplicacion").value,
+        edadCalculada: estado.edadAnios,
+        constanciaFueraRangoEdad: estado.constanciaFueraRangoEdad,
+        tramoEdad: estado.tramoEdad,
+        examinador: document.getElementById("examinador").value.trim(),
+        respuestas: estado.respuestas
+      };
+
+      const jsonString = JSON.stringify(payload);
+
+      try {
+        await fetch(WEB_APP_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: jsonString
+        });
+
+        limpiarEstado("status-envio");
+        document.getElementById("nota-cierre-manual").style.display = "none";
+        document.getElementById("modal-exito").classList.add("active");
+      } catch (err) {
+        try {
+          await enviarViaIframeForm(jsonString);
+          limpiarEstado("status-envio");
+          document.getElementById("nota-cierre-manual").style.display = "none";
+          document.getElementById("modal-exito").classList.add("active");
+        } catch (err2) {
+          estado.envioEnCurso = false;
+          btnSig.disabled = false;
+          btnAnt.disabled = false;
+          mostrarEstado(
+            "status-envio",
+            "err",
+            "Error al enviar (" + err.message + "). Abre el enlace en Safari o Chrome con conexión HTTPS."
+          );
+        }
+      }
+    }
+
+    function cerrarTodo() {
+      document.getElementById("modal-exito").classList.remove("active");
+      window.open("", "_self");
+      window.close();
+
+      setTimeout(() => {
+        if (!window.closed) {
+          document.querySelector(".container").innerHTML = `
+            <div class="card" style="text-align:center; padding:36px;">
+              <h2>Evaluación finalizada</h2>
+              <p class="subtitle">Puedes cerrar esta pestaña o ventana del navegador.</p>
+            </div>
+          `;
+        }
+      }, 150);
+    }
+  </script>
+</body>
+</html>
