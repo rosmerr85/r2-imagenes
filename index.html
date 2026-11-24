@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Raven's 2 — Evaluación Digital</title>
+  <title>Raven's 2 — Aplicación Digital</title>
   <style>
     :root {
       --bg: #f4f6f9;
@@ -334,7 +334,7 @@
 
     <div id="seccion-datos" class="card">
       <h2>Datos del Evaluado y Configuración</h2>
-      <div class="grid-2">
+      <div class="grid-3">
         <div class="field">
           <label for="nombre">Nombre o código del evaluado *</label>
           <input id="nombre" type="text" required placeholder="Ej. EVAL-001" />
@@ -352,10 +352,15 @@
           <label for="fechaNacimiento">Fecha de nacimiento *</label>
           <input id="fechaNacimiento" type="date" required onchange="actualizarEdadYTramo()" />
         </div>
+      </div>
+
+      <div class="grid-3">
         <div class="field">
           <label for="fechaAplicacion">Fecha de aplicación *</label>
           <input id="fechaAplicacion" type="date" required onchange="actualizarEdadYTramo()" />
         </div>
+        <div class="field"></div>
+        <div class="field"></div>
       </div>
 
       <div class="grid-3">
@@ -381,6 +386,11 @@
       <div class="field">
         <label for="examinador">Examinador / Observaciones</label>
         <input id="examinador" type="text" placeholder="Opcional" />
+      </div>
+
+      <div class="field">
+        <label for="pinAcceso">PIN de acceso *</label>
+        <input id="pinAcceso" type="password" required autocomplete="off" placeholder="Ej. R2-849201" />
       </div>
 
       <div class="actions">
@@ -468,6 +478,7 @@
     ];
 
     const estado = {
+      pinValidado: "",
       edadAnios: null,
       constanciaFueraRangoEdad: "",
       tramoEdad: "",
@@ -696,17 +707,27 @@
       el.textContent = "";
     }
 
+    async function validarPinRemoto(pin) {
+      const url = `${WEB_APP_URL}?action=validarPin&pin=${encodeURIComponent(pin)}`;
+      const resp = await fetch(url, { method: "GET", cache: "no-store" });
+      if (!resp.ok) {
+        throw new Error(`Error HTTP ${resp.status} al validar el PIN.`);
+      }
+      return await resp.json();
+    }
+
     async function iniciarEvaluacion() {
       actualizarEdadYTramo();
 
+      const pinAcceso = document.getElementById("pinAcceso").value.trim();
       const nombre = document.getElementById("nombre").value.trim();
       const sexo = document.getElementById("sexo").value;
       const fechaNacimiento = document.getElementById("fechaNacimiento").value;
       const fechaAplicacion = document.getElementById("fechaAplicacion").value;
       const tramoEdad = estado.tramoEdad;
 
-      if (!nombre || !sexo || !fechaNacimiento || !fechaAplicacion) {
-        mostrarEstado("status-inicio", "err", "Por favor completa todos los campos obligatorios (*).");
+      if (!pinAcceso || !nombre || !sexo || !fechaNacimiento || !fechaAplicacion) {
+        mostrarEstado("status-inicio", "err", "Por favor completa todos los campos obligatorios (*), incluyendo el PIN.");
         return;
       }
 
@@ -717,6 +738,25 @@
 
       const btn = document.getElementById("btnIniciar");
       btn.disabled = true;
+      mostrarEstado("status-inicio", "ok", "Validando PIN de acceso...");
+
+      try {
+        const resPin = await validarPinRemoto(pinAcceso);
+        if (!resPin || !resPin.valido) {
+          btn.disabled = false;
+          mostrarEstado(
+            "status-inicio",
+            "err",
+            (resPin && resPin.motivo) ? resPin.motivo : "PIN no válido o inactivo."
+          );
+          return;
+        }
+        estado.pinValidado = pinAcceso;
+      } catch (err) {
+        btn.disabled = false;
+        mostrarEstado("status-inicio", "err", "No se pudo validar el PIN: " + err.message);
+        return;
+      }
 
       const esMenor = tramoEdad.startsWith("4:0 a 8:11");
       estado.tramoEdad = tramoEdad;
@@ -728,7 +768,7 @@
       mostrarEstado(
         "status-inicio",
         "ok",
-        `Cargando bloque completo (${estado.grupos.join(", ")}) y ejemplos desde GitHub Pages...`
+        `PIN validado. Cargando bloque completo (${estado.grupos.join(", ")}) y ejemplos...`
       );
 
       await precargarBloqueCompleto(estado.catalogoUrls, (done, total) => {
@@ -747,6 +787,7 @@
     }
 
     function volverADatos() {
+      estado.pinValidado = "";
       document.getElementById("seccion-ejemplos").classList.add("hidden");
       document.getElementById("seccion-datos").classList.remove("hidden");
       document.getElementById("btnIniciar").disabled = false;
@@ -1084,6 +1125,7 @@
       mostrarEstado("status-envio", "ok", "Enviando evaluación y guardando respuestas...");
 
       const payload = {
+        pinAcceso: estado.pinValidado || document.getElementById("pinAcceso").value.trim(),
         nombre: document.getElementById("nombre").value.trim(),
         sexo: document.getElementById("sexo").value,
         fechaNacimiento: document.getElementById("fechaNacimiento").value,
